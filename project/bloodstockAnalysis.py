@@ -1,36 +1,15 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
 # Read in the data
-df = pd.read_excel('Online_Retail.xlsx', index_col=0)
 dfb = pd.read_csv('bloodstockSalesData.csv', index_col=0)
-
-#-------------------------------------------------------------
-#DATA PREPROCESSING
-
-#Create year, month and qurter from InvoiceDate date column
-df['Year'] = pd.DatetimeIndex(df['InvoiceDate']).year
-df['Month'] = pd.DatetimeIndex(df['InvoiceDate']).month
-df['Quarter'] = pd.DatetimeIndex(df['InvoiceDate']).quarter
-
-#Create revenue column. Profit is quantity * unit price
-df['Revenue'] = df['Quantity'] * df['UnitPrice']
-
-#Create year, month and qurter from InvoiceDate date column
 dfb['Year'] = pd.DatetimeIndex(dfb['saleDate']).year
 dfb['Month'] = pd.DatetimeIndex(dfb['saleDate']).month
 dfb['Quarter'] = pd.DatetimeIndex(dfb['saleDate']).quarter
 
 #-------------------------------------------------------------
 #DISPLAYING DATA
-
-#Revenue by Month
-monthly_data = df.groupby(['Year', 'Month'])['Revenue'].sum()
-monthly = list(monthly_data)
-
-#Revenue by Quarter
-quarter_data = df.groupby(['Year', 'Quarter'])['Revenue'].sum()
-quarter = list(quarter_data)
 
 #Revenue by Month for bloodstock
 monthly_datab = dfb.groupby(['Year', 'Month'])['Price'].sum()
