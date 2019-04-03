@@ -1,5 +1,9 @@
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+#matplotlib.use('QTAgg')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 # Read in the data
@@ -21,8 +25,14 @@ quarterb = list(quarter_datab)
 
 #plot the total sales per month
 # It is seen that this data is seasonal
+fig = plt.figure("monthly")
 plt.plot(monthlyb, 'bo-') 
+plt.savefig("monthly.png")
+
+fig = plt.figure("quarterly")
 plt.plot(quarterb, 'bo-') 
+plt.savefig("quarterly.png")
+
 #-------------------------------------------------------------
 # METHODS FOR DETERMING THE NEXT POINT IN THE SERIES...
 # Method 1: Arithmetic mean
