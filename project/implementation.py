@@ -34,12 +34,11 @@ def exponential_smoothing(series, alpha):
     return result
 
 def double_exponential_smoothing(series, alpha, beta):
-    # Method 5: Double exponential smoothing
     # Calculates the next point using three formulas: one for trend, one for level
     # and one for the forecast
     """
     Series: list of values - e.g. sales data
-    alpha: 0 > float > 1            0.1, 0.5, 0.9 are vals supplied in paper
+    alpha: 0 > float > 1            NOTE: 0.1, 0.5, 0.9 are vals supplied in paper
     beta:  0 > float > 1 = alpha
         lower = optimism
         higher = pessimism 
@@ -61,23 +60,18 @@ def double_exponential_smoothing(series, alpha, beta):
 
 df = pd.read_excel('Online_Retail.xlsx', index_col=0)
 
-# Create columns 
 df['Year'] = pd.DatetimeIndex(df['InvoiceDate']).year
 df['Month'] = pd.DatetimeIndex(df['InvoiceDate']).month
 df['Quarter'] = pd.DatetimeIndex(df['InvoiceDate']).quarter
 df['Revenue'] = df['Quantity'] * df['UnitPrice']
-#df['Datestring'] = df['Year'].map(str) + " " + df['Month'].map(str)  # for plotting
 
-#Revenue by time hierarchies
-#monthly_data = df.groupby(['StockCode', 'Country', 'Year', 'Month'])['Revenue'].sum()
-monthly_data = df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
-monthly = list(monthly_data)
-quarter_data = df.groupby(['Year', 'Quarter'])['Revenue'].sum()
-quarter = list(quarter_data)
+# aggregate revenue by stockcode and time hierarchies
+#monthly_data = df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
+#monthly = list(monthly_data)
 
 # donut lip gloss: stock code=23077
 lipgloss_df = df[df['StockCode'] == 23077]
-lipgloss_monthly_withdecember = lipgloss_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
+lipgloss_monthly_withdecember = lipgloss_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()  # aggregate
 lipgloss_monthly = lipgloss_monthly_withdecember[:-1]
 lipgloss_xlabels = [str(x) for x in lipgloss_monthly.index.levels[2]][:-1]
 alpha = 0.3
@@ -91,7 +85,7 @@ salesplt,  = plt.plot(lipgloss_xlabels,             list(lipgloss_monthly),     
 predicplt, = plt.plot(lipgloss_xlabels[-1:]+['12'], list(smoothed_monthly_lipgloss)[-2:],   'o-', c="xkcd:goldenrod") 
 smoothplt, = plt.plot(lipgloss_xlabels,             list(smoothed_monthly_lipgloss)[:-1],   'o-', c="xkcd:red") 
 plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed: alpha=%s"%(alpha), "Predictions: alpha=%s"%(alpha)])
-plt.xlabel("Month")
+plt.xlabel("Month (2011)")
 plt.xticks(lipgloss_xlabels + ['12'])
 plt.ylabel("Sales")
 plt.savefig("monthly_lipgloss.png", bbox_inches='tight')
