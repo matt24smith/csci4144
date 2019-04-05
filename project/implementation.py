@@ -77,19 +77,22 @@ quarter = list(quarter_data)
 
 # donut lip gloss: stock code=23077
 lipgloss_df = df[df['StockCode'] == 23077]
-lipgloss_monthly = lipgloss_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
-lipgloss_xlabels = [str(x) for x in lipgloss_monthly.index.levels[2]]
-smoothed_monthly_lipgloss = double_exponential_smoothing(lipgloss_monthly, 0.5, 0.5)
+lipgloss_monthly_withdecember = lipgloss_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
+lipgloss_monthly = lipgloss_monthly_withdecember[:-1]
+lipgloss_xlabels = [str(x) for x in lipgloss_monthly.index.levels[2]][:-1]
+alpha = 0.3
+beta = alpha
+smoothed_monthly_lipgloss = double_exponential_smoothing(lipgloss_monthly, alpha, beta)
 
 # plotting for lip gloss
 fig = plt.figure("monthly")
 fig.suptitle("Donut Flavoured Lipgloss - Sales by Month")
-salesplt, = plt.plot(lipgloss_xlabels, list(lipgloss_monthly), 'o-', c="xkcd:deep blue") 
-predicplt, = plt.plot(lipgloss_xlabels[-1:] + ['1'], list(smoothed_monthly_lipgloss)[-2:], 'o-', c="xkcd:goldenrod") 
-smoothplt, = plt.plot(lipgloss_xlabels, list(smoothed_monthly_lipgloss)[:-1], 'o-', c="xkcd:red") 
-plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed", "Predictions"])
+salesplt,  = plt.plot(lipgloss_xlabels,             list(lipgloss_monthly),                 'o-', c="xkcd:deep blue") 
+predicplt, = plt.plot(lipgloss_xlabels[-1:]+['12'], list(smoothed_monthly_lipgloss)[-2:],   'o-', c="xkcd:goldenrod") 
+smoothplt, = plt.plot(lipgloss_xlabels,             list(smoothed_monthly_lipgloss)[:-1],   'o-', c="xkcd:red") 
+plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed: alpha=%s"%(alpha), "Predictions: alpha=%s"%(alpha)])
 plt.xlabel("Month")
-plt.xticks(lipgloss_xlabels + ['1'], rotation=45)
+plt.xticks(lipgloss_xlabels + ['12'])
 plt.ylabel("Sales")
 plt.savefig("monthly_lipgloss.png", bbox_inches='tight')
 plt.close()
