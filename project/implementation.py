@@ -5,34 +5,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def avg(series):
-    s = sum(series)
-    l = len(series)
-    return float(s/l)
-
-def moving_avg(series, n):
-    # avg last n points in series
-    return avg(series[-n:])
-    
-def weighted_avg(series, weights):
-    # Points are weighted so that some contribute more to the calculation.
-    # Weights is a list of weights that add up to 1. ex: [0.2, 0.3, 0.4, 0.1]
-    avg = 0.0
-    weights.reverse()
-    for n in range(len(weights)):
-        avg += series[-n-1] * weights[n]
-    return avg
-
-def exponential_smoothing(series, alpha):
-    # Calculates the next point using the formula: alpha*y_x + (1-alpha)*y_x-1
-    # Where y_x is the current value in the seires, y_x-1 is the expected value 
-    # of the previous point in the series, and alpha is a value between 0-1
-    # For our series, a higher value of alpha (0.9) seems to work best
-    result = [series[0]] # first value is same as series
-    for n in range(1, len(series)):
-        result.append(alpha * series[n] + (1 - alpha) * result[n-1])
-    return result
-
 def double_exponential_smoothing(series, alpha, beta):
     # Calculates the next point using three formulas: one for trend, one for level
     # and one for the forecast
@@ -57,7 +29,31 @@ def double_exponential_smoothing(series, alpha, beta):
         result.append(level+trend)
     return result
 
+def input_alpha(prompt):
+    while True:
+        try: 
+            alpha = float(input(prompt))
+            assert(alpha >= 0)
+            assert(alpha <= 1)
+            return alpha
+        except : 
+            print("Invalid alpha")
 
+def input_stockID(prompt, df):
+    while True:
+        try:
+            stockID = input(prompt)
+            try:
+                stockID = int(stockID)
+            except:
+                pass
+            assert(stockID in np.array(df['StockCode']))
+            return stockID
+        except:
+            print("Invalid Stock Code: item not found in dataset")
+
+
+print("Reading information from Online_Retail.xlsx ...")
 df = pd.read_excel('Online_Retail.xlsx', index_col=0)
 
 df['Year'] = pd.DatetimeIndex(df['InvoiceDate']).year
@@ -65,29 +61,28 @@ df['Month'] = pd.DatetimeIndex(df['InvoiceDate']).month
 df['Quarter'] = pd.DatetimeIndex(df['InvoiceDate']).quarter
 df['Revenue'] = df['Quantity'] * df['UnitPrice']
 
-# aggregate revenue by stockcode and time hierarchies
-#monthly_data = df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()
-#monthly = list(monthly_data)
+alpha = input_alpha("Input an alpha value for double exponential smoothing.\n0 <= alpha <= 1 (Default: 0.5) : ")
+stockID = input_stockID("Input a stock code to aggregate on (Default: 23077 for lipgloss stock item) : ", df)
 
 # donut lip gloss: stock code=23077
-lipgloss_df = df[df['StockCode'] == 23077]
-lipgloss_monthly_withdecember = lipgloss_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()  # aggregate
-lipgloss_monthly = lipgloss_monthly_withdecember[:-1]
-lipgloss_xlabels = [str(x) for x in lipgloss_monthly.index.levels[2]][:-1]
-alpha = 0.3
+item_df_all = df[df['StockCode'] == stockID]
+item_df = item_df_all[item_df_all['Year'] == 2011]
+item_monthly_withdecember = item_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()  # aggregate
+item_monthly = item_monthly_withdecember[:-1]
+item_xlabels = [str(x) for x in item_monthly.index.levels[2]][:-1]
 beta = alpha
-smoothed_monthly_lipgloss = double_exponential_smoothing(lipgloss_monthly, alpha, beta)
+smoothed_monthly_item = double_exponential_smoothing(item_monthly, alpha, beta)
 
 # plotting for lip gloss
 fig = plt.figure("monthly")
-fig.suptitle("Donut Flavoured Lipgloss - Sales by Month")
-salesplt,  = plt.plot(lipgloss_xlabels,             list(lipgloss_monthly),                 'o-', c="xkcd:deep blue") 
-predicplt, = plt.plot(lipgloss_xlabels[-1:]+['12'], list(smoothed_monthly_lipgloss)[-2:],   'o-', c="xkcd:goldenrod") 
-smoothplt, = plt.plot(lipgloss_xlabels,             list(smoothed_monthly_lipgloss)[:-1],   'o-', c="xkcd:red") 
+fig.suptitle(item_df['Description'][0] + " - Sales by Month")
+salesplt,  = plt.plot(item_xlabels,             list(item_monthly),                 'o-', c="xkcd:deep blue") 
+predicplt, = plt.plot(item_xlabels[-1:]+['12'], list(smoothed_monthly_item)[-2:],   'o-', c="xkcd:goldenrod") 
+smoothplt, = plt.plot(item_xlabels,             list(smoothed_monthly_item)[:-1],   'o-', c="xkcd:red") 
 plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed: alpha=%s"%(alpha), "Predictions: alpha=%s"%(alpha)])
 plt.xlabel("Month (2011)")
-plt.xticks(lipgloss_xlabels + ['12'])
+plt.xticks(item_xlabels + ['12'])
 plt.ylabel("Sales")
-plt.savefig("monthly_lipgloss.png", bbox_inches='tight')
+plt.savefig("monthly_item.png", bbox_inches='tight')
 plt.close()
 
