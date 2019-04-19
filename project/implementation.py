@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -74,7 +73,7 @@ def graph(df):
     beta = alpha
     smoothed_monthly_item = double_exponential_smoothing(item_monthly, alpha, beta)
 
-    # plotting for lip gloss
+    # plotting for stock item
     fig = plt.figure("monthly")
     fig.suptitle(item_df['Description'][0] + " - Sales by Month")
     salesplt,  = plt.plot(item_xlabels,             list(item_monthly),                 'o-', c="xkcd:deep blue") 
@@ -89,8 +88,8 @@ def graph(df):
     print("Results saved to " + item_df['Description'][0] + "_monthly.png")
 
 graph(df)
-again = input("Would you like to plot another stock item?")
+again = input("Would you like to plot another stock item? [y/n] :")
 while (again[0] == "y" or again[0] == "Y"):
     graph(df)
-    again = input("Would you like to plot another stock item?")
+    again = input("Would you like to plot another stock item? [y/n] :")
 
