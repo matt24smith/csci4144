@@ -61,28 +61,36 @@ df['Month'] = pd.DatetimeIndex(df['InvoiceDate']).month
 df['Quarter'] = pd.DatetimeIndex(df['InvoiceDate']).quarter
 df['Revenue'] = df['Quantity'] * df['UnitPrice']
 
-alpha = input_alpha("Input an alpha value for double exponential smoothing.\n0 <= alpha <= 1 (Default: 0.5) : ")
-stockID = input_stockID("Input a stock code to aggregate on (Default: 23077 for lipgloss stock item) : ", df)
+def graph(df):
+    alpha = input_alpha("Input an alpha value for double exponential smoothing.\n0 <= alpha <= 1 (Default: 0.5) : ")
+    stockID = input_stockID("Input a stock code to aggregate on (Default: 23077 for lipgloss stock item) : ", df)
 
-# donut lip gloss: stock code=23077
-item_df_all = df[df['StockCode'] == stockID]
-item_df = item_df_all[item_df_all['Year'] == 2011]
-item_monthly_withdecember = item_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()  # aggregate
-item_monthly = item_monthly_withdecember[:-1]
-item_xlabels = [str(x) for x in item_monthly.index.levels[2]][:-1]
-beta = alpha
-smoothed_monthly_item = double_exponential_smoothing(item_monthly, alpha, beta)
+    # donut lip gloss: stock code=23077
+    item_df_all = df[df['StockCode'] == stockID]
+    item_df = item_df_all[item_df_all['Year'] == 2011]
+    item_monthly_withdecember = item_df.groupby(['StockCode', 'Year', 'Month'])['Revenue'].sum()  # aggregate
+    item_monthly = item_monthly_withdecember[:-1]
+    item_xlabels = [str(x) for x in item_monthly.index.levels[2]][:-1]
+    beta = alpha
+    smoothed_monthly_item = double_exponential_smoothing(item_monthly, alpha, beta)
 
-# plotting for lip gloss
-fig = plt.figure("monthly")
-fig.suptitle(item_df['Description'][0] + " - Sales by Month")
-salesplt,  = plt.plot(item_xlabels,             list(item_monthly),                 'o-', c="xkcd:deep blue") 
-predicplt, = plt.plot(item_xlabels[-1:]+['12'], list(smoothed_monthly_item)[-2:],   'o-', c="xkcd:goldenrod") 
-smoothplt, = plt.plot(item_xlabels,             list(smoothed_monthly_item)[:-1],   'o-', c="xkcd:red") 
-plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed: alpha=%s"%(alpha), "Predictions: alpha=%s"%(alpha)])
-plt.xlabel("Month (2011)")
-plt.xticks(item_xlabels + ['12'])
-plt.ylabel("Sales")
-plt.savefig("monthly_item.png", bbox_inches='tight')
-plt.close()
+    # plotting for lip gloss
+    fig = plt.figure("monthly")
+    fig.suptitle(item_df['Description'][0] + " - Sales by Month")
+    salesplt,  = plt.plot(item_xlabels,             list(item_monthly),                 'o-', c="xkcd:deep blue") 
+    predicplt, = plt.plot(item_xlabels[-1:]+['12'], list(smoothed_monthly_item)[-2:],   'o-', c="xkcd:goldenrod") 
+    smoothplt, = plt.plot(item_xlabels,             list(smoothed_monthly_item)[:-1],   'o-', c="xkcd:red") 
+    plt.legend([salesplt, smoothplt, predicplt], ["Observed", "Smoothed: alpha=%s"%(alpha), "Predictions: alpha=%s"%(alpha)])
+    plt.xlabel("Month (2011)")
+    plt.xticks(item_xlabels + ['12'])
+    plt.ylabel("Sales")
+    plt.savefig(item_df['Description'][0] + "_monthly.png", bbox_inches='tight')
+    plt.close()
+    print("Results saved to " + item_df['Description'][0] + "_monthly.png")
+
+graph(df)
+again = input("Would you like to plot another stock item?")
+while (again[0] == "y" or again[0] == "Y"):
+    graph(df)
+    again = input("Would you like to plot another stock item?")
 
